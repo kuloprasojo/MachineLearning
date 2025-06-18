@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 from streamlit_option_menu import option_menu
+import io  
 
 def naive_bayes_predict(df):
     train_size = int(0.8 * len(df))
@@ -78,9 +79,10 @@ def main():
             st.write(df.isnull().sum())
 
             st.subheader("Struktur Dataset")
-            buffer = []
-            df.info(buf=buffer.append)
-            st.text('\n'.join(buffer))
+            buffer = io.StringIO()
+            df.info(buf=buffer)
+            st.text(buffer.getvalue())
+
 
         elif selected == "Klasifikasi Naive Bayes":
             st.header("📦 Klasifikasi dengan Naive Bayes")
