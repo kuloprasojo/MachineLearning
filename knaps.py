@@ -1,7 +1,9 @@
 import streamlit as st
 import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+import io
 from streamlit_option_menu import option_menu
-import io  
 
 def naive_bayes_predict(df):
     train_size = int(0.8 * len(df))
@@ -73,6 +75,7 @@ def main():
 
         elif selected == "Informasi Dataset":
             st.header("📁 Informasi Dataset")
+            st.write(f"Dataset berisi **{df.shape[0]} baris** dan **{df.shape[1]} kolom**.")
             st.write("Jumlah data tiap kelas:")
             st.write(df['type'].value_counts())
             st.write("Jumlah nilai hilang per kolom:")
@@ -81,14 +84,25 @@ def main():
             st.subheader("Struktur Dataset")
             buffer = io.StringIO()
             df.info(buf=buffer)
-            st.text(buffer.getvalue())
-
+            st.code(buffer.getvalue(), language='text')
 
         elif selected == "Klasifikasi Naive Bayes":
             st.header("📦 Klasifikasi dengan Naive Bayes")
             with st.spinner("Sedang menghitung..."):
                 accuracy, prediction_df, _, _, _, _, _ = naive_bayes_predict(df)
+
             st.success(f"Akurasi Model: {accuracy:.2%}")
+
+            st.subheader("📊 Distribusi Hasil Prediksi")
+            pred_count = prediction_df['Prediksi'].value_counts()
+
+            fig, ax = plt.subplots()
+            sns.barplot(x=pred_count.index, y=pred_count.values, ax=ax, palette="Set2")
+            ax.set_title("Jumlah Prediksi per Kategori")
+            ax.set_ylabel("Jumlah")
+            ax.set_xlabel("Label Prediksi")
+            st.pyplot(fig)
+
             st.subheader("Contoh Hasil Prediksi")
             st.dataframe(prediction_df.head(10))
 
@@ -97,12 +111,10 @@ def main():
             accuracy, _, predict_func, prior_prob, likelihoods, labels, features = naive_bayes_predict(df)
 
             input_data = {}
-
             with st.form("form_uji_coba"):
                 for feature in features:
                     pilihan = st.radio(f"Apakah Anda mengalami '{feature}'?", ["Tidak", "Ya"], horizontal=True)
                     input_data[feature] = 1 if pilihan == "Ya" else 0
-
                 submitted = st.form_submit_button("🔍 Submit Prediksi")
 
             if submitted:
