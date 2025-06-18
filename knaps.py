@@ -53,13 +53,14 @@ def naive_bayes_predict(df):
     return accuracy, test_data
 
 def main():
+    st.set_page_config(page_title="Naive Bayes Classifier", layout="wide")
     with st.sidebar:
         selected = option_menu(
             "Main Menu",
             ["Home", "Informasi Dataset", "Klasifikasi Naive Bayes", "Uji Coba"], 
             icons=['house', 'table', 'boxes', 'check2-circle'], 
             menu_icon="cast",
-            default_index=0,
+            default_index=1,
             orientation='vertical'
         )
         upload_file = st.file_uploader("Masukkan file CSV di sini", key="fileUploader")
