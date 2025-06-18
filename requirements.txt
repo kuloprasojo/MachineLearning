@@ -4,3 +4,4 @@ streamlit-option-menu>=0.3.2
 matplotlib
 scikit-learn
 numpy
+seaborn
