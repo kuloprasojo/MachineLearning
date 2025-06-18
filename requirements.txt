@@ -1,8 +1,4 @@
 numpy==1.22
 pandas
-scikit_learn
 streamlit
 streamlit-option-menu
-tensorflow==2.12
-seaborn
-matplotlib
