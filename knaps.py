@@ -3,7 +3,9 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import io
+import base64
 from streamlit_option_menu import option_menu
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 
 def naive_bayes_predict(df):
     train_size = int(0.8 * len(df))
@@ -95,7 +97,6 @@ def main():
 
             st.subheader("📊 Distribusi Hasil Prediksi")
             pred_count = prediction_df['Prediksi'].value_counts()
-
             fig, ax = plt.subplots()
             sns.barplot(x=pred_count.index, y=pred_count.values, ax=ax, palette="Set2")
             ax.set_title("Jumlah Prediksi per Kategori")
@@ -103,8 +104,20 @@ def main():
             ax.set_xlabel("Label Prediksi")
             st.pyplot(fig)
 
+            st.subheader("🧮 Confusion Matrix")
+            cm = confusion_matrix(prediction_df['type'], prediction_df['Prediksi'], labels=prediction_df['type'].unique())
+            fig_cm, ax_cm = plt.subplots()
+            disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=prediction_df['type'].unique())
+            disp.plot(ax=ax_cm, cmap='Blues')
+            st.pyplot(fig_cm)
+
             st.subheader("Contoh Hasil Prediksi")
             st.dataframe(prediction_df.head(10))
+
+            # Tombol unduh hasil
+            csv = prediction_df.to_csv(index=False)
+            b64 = base64.b64encode(csv.encode()).decode()
+            st.markdown(f'<a href="data:file/csv;base64,{b64}" download="hasil_prediksi.csv">📥 Unduh Hasil sebagai CSV</a>', unsafe_allow_html=True)
 
         elif selected == "Uji Coba":
             st.header("🧪 Uji Coba Prediksi Manual")
@@ -119,8 +132,27 @@ def main():
 
             if submitted:
                 input_row = pd.DataFrame([input_data])
-                result = predict_func(input_row.iloc[0])
+
+                # Hitung probabilitas semua label
+                probabilities = {}
+                for label in labels:
+                    prob = prior_prob[label]
+                    for feature in features:
+                        prob *= likelihoods[label][feature].get(input_row.iloc[0][feature], 1e-6)
+                    probabilities[label] = prob
+
+                sorted_probs = dict(sorted(probabilities.items(), key=lambda x: x[1], reverse=True))
+                result = max(sorted_probs, key=sorted_probs.get)
                 st.success(f"Hasil Prediksi Berdasarkan Input Anda: **{result}**")
+
+                st.subheader("📊 Probabilitas Tiap Label")
+                prob_df = pd.DataFrame(sorted_probs.items(), columns=["Label", "Probabilitas"])
+                st.dataframe(prob_df)
+
+                fig_prob, ax_prob = plt.subplots()
+                sns.barplot(x="Probabilitas", y="Label", data=prob_df, palette="viridis", ax=ax_prob)
+                ax_prob.set_title("Distribusi Probabilitas Prediksi")
+                st.pyplot(fig_prob)
 
     else:
         st.warning("Silakan unggah file CSV terlebih dahulu melalui sidebar.")
